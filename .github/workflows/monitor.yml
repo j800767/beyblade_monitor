@@ -30,9 +30,10 @@ jobs:
       run: |
         python monitor.py
 
+# 如果有更新 known_products.txt，先同步遠端最新版本再 Commit Push
     - name: Commit and Push Changes
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add known_products.txt
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update known products" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update known products" && git pull --rebase origin main && git push)
