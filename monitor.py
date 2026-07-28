@@ -4,23 +4,28 @@ from bs4 import BeautifulSoup
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 
-# 從環境變數讀取金鑰資訊
+# 讀取環境變數
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_USER_ID = os.environ.get("LINE_USER_ID")
+
 TARGET_URL = "https://shop.funbox.com.tw/categories/XI/KB"
 HISTORY_FILE = "known_products.txt"
-
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 
 def send_line_msg(message):
+    """發送 LINE 通知"""
+    if not LINE_CHANNEL_ACCESS_TOKEN or not LINE_USER_ID:
+        print("⚠️ 未設定 LINE Token 或 User ID")
+        return
     try:
+        line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
         line_bot_api.push_message(LINE_USER_ID, TextSendMessage(text=message))
+        print("✅ LINE 訊息發送成功")
     except Exception as e:
-        print(f"LINE 發送失敗: {e}")
+        print(f"❌ LINE 發送失敗: {e}")
 
 def load_known_products():
     if os.path.exists(HISTORY_FILE):
@@ -46,7 +51,7 @@ def get_current_products():
                 products.add(title if title else href)
         return products
     except Exception as e:
-        print(f"抓取失敗: {e}")
+        print(f"網站爬取失敗: {e}")
         return None
 
 def main():
@@ -54,23 +59,37 @@ def main():
     current_products = get_current_products()
 
     if current_products is None:
+        print("⚠️ 無法取得網頁商品資料")
         return
 
-    # 首次執行，先建立紀錄檔
+    # 首次啟動（找不到 known_products.txt 時）
     if not known_products:
-        print("初始化紀錄檔...")
+        print("🚀 首次啟動監控，紀錄目前商品並發送測試通知...")
         save_known_products(current_products)
+        
+        # 發送啟動測試簡訊給你的 LINE
+        startup_msg = (
+            f"✅ <b>Funbox 監控系統已成功啟動！</b>\n\n"
+            f"📊 目前追蹤商品數：{len(current_products)} 件\n"
+            f"⏱️ 系統運作正常，每 15 分鐘將自動檢查是否有新品。"
+        )
+        send_line_msg(startup_msg)
         return
 
+    # 比對新品
     new_items = current_products - known_products
 
     if new_items:
-        print(f"發現 {len(new_items)} 項新商品！")
+        print(f"🎉 發現 {len(new_items)} 項新商品！發送 LINE 通知...")
         for item in new_items:
-            msg = f"🚨 Funbox 新商品上架！\n\n📦 商品：{item}\n🔗 連結：{TARGET_URL}"
+            msg = (
+                f"🚨 Funbox 有新商品上架囉！\n\n"
+                f"📦 商品：{item}\n"
+                f"🔗 連結：{TARGET_URL}"
+            )
             send_line_msg(msg)
         
-        # 更新並存檔
+        # 更新並儲存歷史清單
         known_products.update(new_items)
         save_known_products(known_products)
     else:
