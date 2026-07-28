@@ -5,8 +5,8 @@ from linebot import LineBotApi
 from linebot.models import TextSendMessage
 
 # 從環境變數讀取金鑰資訊
-LINE_ACCESS_TOKEN = 'BauwWM9BdztmwHbWeCYDFizHvyLpYa/5c/BAv7eLHCRzc3sDnhkisOKVHP2Se68nrIpoCLKYbHQ+mlnUMdHF6ThQ8psqAW9EfWylcOeYKMzQVexI4Y5N6YiCcunWZzpDJHeZNfrb8XuOazd+5P/CHQdB04t89/1O/w1cDnyilFU='
-LINE_USER_ID = 'U412b9f83d42cb4c1a1d289d6bd6e3d02'
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+LINE_USER_ID = os.environ.get("LINE_USER_ID")
 TARGET_URL = "https://shop.funbox.com.tw/categories/XI/KB"
 HISTORY_FILE = "known_products.txt"
 
